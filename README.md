@@ -1,6 +1,6 @@
 # InSim.Client
 
-It is a mininalistic client for the LFS InSim. Maintains the connection and supports only 3 incoming informational packet types.
+It is a mininalistic client for the LFS InSim targeting .NET 8. Maintains the connection and supports only 3 incoming informational packet types.
 
 Possible usage:
 ```C#
