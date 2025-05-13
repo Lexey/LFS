@@ -49,14 +49,30 @@ namespace InSim.Client
             }
         }
 
+        /// <summary>Init flags.</summary>
+        public InitFlags Flags
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// Time interval between car info (NLP or MCI) packets in ms.
+        /// </summary>
+        public ushort CarInfoIntervalMillis
+        {
+            get;
+            set;
+        }
+
         public void WriteData(BinaryWriter writer)
         {
             writer.Write((byte)0); // Zero byte
             writer.Write((ushort)0); // UDPPort = 0 (not used)
-            writer.Write((ushort)0); // Flags = 0 (no flags set)
+            writer.Write((ushort)Flags);
             writer.Write((byte)ProtocolVersion); // InSimVer
             writer.Write((byte)0); // Prefix = 0 (not used)
-            writer.Write((ushort)0); // Interval = 0 (none)
+            writer.Write(CarInfoIntervalMillis);
             writer.WriteFixedString(adminPassword_, FixedStringSize);
             writer.WriteFixedString(clientName_, FixedStringSize);
         }

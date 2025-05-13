@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Runtime.InteropServices;
+using System.Text;
 
 namespace InSim.Packets
 {
@@ -9,7 +10,7 @@ namespace InSim.Packets
 
         public byte RequestId { get; } = requestId;
 
-        /// <summary>Number of race laps. 0 for qualification</summary>
+        /// <summary>Number of race laps. 0 for qualification.</summary>
         public byte RaceLaps { get; } = data[1];
 
         public byte PlayersNumber { get; } = data[3];

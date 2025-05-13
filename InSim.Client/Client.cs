@@ -1,5 +1,4 @@
-﻿using System;
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
 using CodeJam;
 using InSim.Packets;
 
@@ -22,12 +21,13 @@ namespace InSim.Client
         public event Action<SplitCompletedPacket>? SplitCompletedPacketReceived;
         /// <summary>Lap completed packet received</summary>
         public event Action<LapCompletedPacket>? LapCompletedPacketReceived;
+        /// <summary>Multi car info packet received</summary>
+        public event Action<MultiCarInfoPacket>? MultiCarInfoPacketReceived;
 
         private const int PacketSizeOffset = 0;
         private const int PacketTypeOffset = 1;
         private const int RequestIdOffset = 2;
         private const int PacketDataOffset = 3;
-
 
         public Client(Parameters parameters, CancellationToken cancellationToken)
         {
@@ -37,7 +37,6 @@ namespace InSim.Client
                 new PacketWriter(parameters_.ProtocolVersion == ProtocolVersion.V8 ? SizeUnit.Byte : SizeUnit.UInt);
             runTask_ = Run();
         }
-
 
         public void Dispose()
         {
@@ -50,7 +49,6 @@ namespace InSim.Client
                 disposed_  = true;
                 tcpClient_.Dispose();
             }
-            // TODO:
             runTask_.Wait(CancellationToken.None);
             runTask_.Dispose();
         }
@@ -68,7 +66,7 @@ namespace InSim.Client
                             return;
                         }
 
-                        tcpClient_?.Dispose();
+                        tcpClient_.Dispose();
                         tcpClient_ = new TcpClient();
                     }
 
@@ -126,7 +124,9 @@ namespace InSim.Client
             {
                 ProtocolVersion = parameters_.ProtocolVersion,
                 ClientName = parameters_.Name,
-                AdminPassword = parameters_.AdminPassword
+                AdminPassword = parameters_.AdminPassword,
+                Flags = parameters_.InitFlags,
+                CarInfoIntervalMillis = parameters_.CarInfoIntervalMillis
             };
             var initBytes = packetWriter_.ToBytes(initPacket);
             await tcpClient_.GetStream().WriteAsync(initBytes, cancellationToken_).ConfigureAwait(false);
@@ -147,7 +147,10 @@ namespace InSim.Client
             while (bytesInBuffer < bytesNeeded)
             {
                 var read = await tcpClient_.GetStream().ReadAsync(buffer, bytesInBuffer, bytesNeeded - bytesInBuffer, cancellationToken_).ConfigureAwait(false);
-                Code.AssertState(read > 0, "TCP stream has been closed");
+                if (read == 0)
+                {
+                    throw new ObjectDisposedException("TCP stream has been closed");
+                }
                 bytesInBuffer += read;
             }
             return bytesInBuffer;
@@ -187,8 +190,11 @@ namespace InSim.Client
                 case (byte)PacketType.LapCompleted:
                     ProcessLapCompleted(packet);
                     return;
+                case (byte)PacketType.MultiCarInfo:
+                    ProcessMultiCarInfo(packet);
+                    return;
             }
-            Logger.Trace("Received packet of type {0}. Ignored.", packetType);
+            Logger.Debug("Received packet of type {0}. Ignored.", packetType);
         }
 
         private void ProcessRaceStarted(ReadOnlySpan<byte> packet)
@@ -207,6 +213,23 @@ namespace InSim.Client
         {
             Logger.Debug("Received lap completed packet");
             LapCompletedPacketReceived?.Invoke(new LapCompletedPacket(packet[PacketDataOffset..]));
+        }
+
+        private void ProcessMultiCarInfo(ReadOnlySpan<byte> packet)
+        {
+            Logger.Debug("Received multi car info packet");
+            var handler = MultiCarInfoPacketReceived;
+            if (handler == null)
+            {
+                return;
+            }
+            var info = new MultiCarInfoPacket(packet[PacketDataOffset..]);
+            if (info.ByteSize != packet[PacketSizeOffset])
+            {
+                Logger.Error($"Received multi car info packet has wrong size {packet[PacketSizeOffset]}. Expected: {info.ByteSize}.");
+                return;
+            }
+            handler.Invoke(info);
         }
     }
 }

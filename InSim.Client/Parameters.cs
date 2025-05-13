@@ -20,5 +20,13 @@
         /// Should be an ASCII string up to 16 characters. Default is empty string.
         /// </summary>
         public string AdminPassword { get; set; } = string.Empty;
+
+        /// <summary>Init flags</summary>
+        public InitFlags InitFlags { get; set; }
+
+        /// <summary>
+        /// Time interval between car info (NLP or MCI) packets in ms.
+        /// </summary>
+        public ushort CarInfoIntervalMillis { get; set; }
     }
 }
