@@ -18,30 +18,30 @@ namespace InSim.Packets
         public struct CarInfo // Car info in 28 bytes - there is an array of these in the MCI (below)
         {
             /// <summary>Current path node</summary>
-            ushort PathNodeIndex;
+            public ushort PathNodeIndex;
             /// <summary>Current lap</summary>
-            ushort Lap;
+            public ushort Lap;
             /// <summary>Player's unique id</summary>
-            byte PlayerId;  
+            public byte PlayerId;  
             /// <summary>Current race position: 0 = unknown, 1 = leader, etc</summary>
-            byte Position;
+            public byte Position;
             /// <summary>Info flags</summary>
-            CarInfoFlags Flags;
+            public CarInfoFlags Flags;
             byte Spare;
             /// <summary>X coordinate (65536 = 1 metre)</summary>
-            int X;
+            public int X;
             /// <summary> Y coordinate (65536 = 1 metre)</summary>
-            int	Y;
+            public int	Y;
             /// <summary> Z coordinate (65536 = 1 metre)</summary>
-            int Z;
+            public int Z;
             /// <summary>Speed (32768 = 100 m/s)</summary>
-            ushort Speed;
+            public ushort Speed;
             /// <summary>Car's motion direction if Speed > 0: 0 = world y direction, 32768 = 180 deg anticlockwise</summary>
-            ushort Direction;
+            public ushort Direction;
             /// <summary>Direction of forward axis: 0 = world y direction, 32768 = 180 deg anticlockwise</summary>
-            ushort	Heading;
+            public ushort	Heading;
             /// <summary>Rate of change of heading: (16384 = 360 deg/s)</summary>
-            short AngularVelocity;
+            public short AngularVelocity;
         };
 
         public int ByteSize { get; private set; } 
