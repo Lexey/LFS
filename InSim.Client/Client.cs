@@ -24,6 +24,9 @@ namespace InSim.Client
         /// <summary>Multi car info packet received</summary>
         public event Action<MultiCarInfoPacket>? MultiCarInfoPacketReceived;
 
+        /// <summary>InSim connection established or re-established after initialization.</summary>
+        public event Action? Connected;
+
         private const int PacketSizeOffset = 0;
         private const int PacketTypeOffset = 1;
         private const int RequestIdOffset = 2;
@@ -74,6 +77,7 @@ namespace InSim.Client
                     await tcpClient_.ConnectAsync(parameters_.Host, parameters_.Port, cancellationToken_)
                         .ConfigureAwait(false);
                     await SendInitPacket();
+                    Connected?.Invoke();
                     
                     var buffer = new byte[2048]; // Max packet size = 1024. Should be sufficient to fit at least 2 packets.
                     var bytesInBuffer = 0; // total number of bytes read to the buffer
@@ -156,7 +160,7 @@ namespace InSim.Client
             return bytesInBuffer;
         }
 
-        private int GetPacketByteSize(byte[] buffer)
+        private int GetPacketByteSize(ReadOnlySpan<byte> buffer)
         {
             var unitSize = buffer[PacketSizeOffset];
             return parameters_.ProtocolVersion == ProtocolVersion.V8 ? unitSize : unitSize * 4;
@@ -224,9 +228,9 @@ namespace InSim.Client
                 return;
             }
             var info = new MultiCarInfoPacket(packet[PacketDataOffset..]);
-            if (info.ByteSize != packet[PacketSizeOffset])
+            if (info.ByteSize != GetPacketByteSize(packet))
             {
-                Logger.Error($"Received multi car info packet has wrong size {packet[PacketSizeOffset]}. Expected: {info.ByteSize}.");
+                Logger.Error($"Received multi car info packet has wrong size {GetPacketByteSize(packet)}. Expected: {info.ByteSize}.");
                 return;
             }
             handler.Invoke(info);
